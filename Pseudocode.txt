@@ -10,7 +10,8 @@ Setup() {
 
 Loop() {
   Setup(); 
-  readSensor(); 
+
+  uint16 sensorVal = readSensor(); 
   
   if (sensorVal) { // only play note if pressure applied to sensor 
     readSoftPots(); // soft pots determine the musical note 
