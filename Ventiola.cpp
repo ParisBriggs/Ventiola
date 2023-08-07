@@ -39,21 +39,21 @@ NoteButton *noteButtons[rowsLength][columnsLength];
 // MIDIFlute config
 
 // Sensor modes:
-const byte SENSOR_VELOCITY = 0;
-const byte SENSOR_MOD_WHEEL = 1;
-const byte SENSOR_PITCH_BEND = 2;
-const byte SENSOR_OCTAVE_SHIFT = 3;
-const byte SENSOR_OFF = 4;
-const byte SENSOR_CUSTOM_CC = 5;
+// const byte SENSOR_VELOCITY = 0;
+// const byte SENSOR_MOD_WHEEL = 1;
+// const byte SENSOR_PITCH_BEND = 2;
+// const byte SENSOR_OCTAVE_SHIFT = 3;
+// const byte SENSOR_OFF = 4;
+// const byte SENSOR_CUSTOM_CC = 5;
 
-byte sensorMode = SENSOR_MOD_WHEEL;
+// byte sensorMode = SENSOR_MOD_WHEEL;
 
 // Under button modes:
-const byte UNDER_BUTTON_8VA_UP = 0;
-const byte UNDER_BUTTON_8VA_DOWN = 1;
-const byte UNDER_BUTTON_SUSTAIN = 2;
+// const byte UNDER_BUTTON_8VA_UP = 0;
+// const byte UNDER_BUTTON_8VA_DOWN = 1;
+// const byte UNDER_BUTTON_SUSTAIN = 2;
 
-byte underButtonMode = 0;
+// byte underButtonMode = 0;
 
 // Strip pot modes:
 const byte STRIP_VELOCITY = 0;
@@ -85,53 +85,28 @@ byte nextStripVal;
 byte increment = 4;
 uint16_t colors[] = { textColor, 0x545d, textShadowColor };
 
-void showSplashScreen() {
-  for (int i = 2; i >= 0; i--) {
-    tft.setTextColor(colors[i]);
-    tft.setCursor(72 - (increment * i), 70 + (increment * i));
-    tft.print("MIDI");
-    tft.setCursor(25 - (increment * i), 130  + (increment * i));
-    tft.print("LODICA");
-  }
+void showSplashScreen() {}
 
-  delay(3000);
-}
-
-void launchScreen() {
-  tft.init(SCREEN_HEIGHT, SCREEN_WIDTH);
-  tft.setRotation(1);
-  tft.fillScreen(backgroundColor);
-
-  tft.setTextSize(4);
-  tft.setFont(&FreeMonoBold9pt7b);
-
-  showSplashScreen();
-
-  tft.setTextColor(textColor);
-  tft.setTextSize(2);
-  drawMenu();
-}
+void launchScreen() {}
 
 void setup() {
+  Serial.begin(9600);
+  
+  // setup pins 
   pinMode(stripPin, INPUT);
   pinMode(sensorPin, INPUT);
   digitalWrite(17, HIGH);
+
+  // setup rows 
   for (byte i = 0; i < rowsLength; i++) {
     pinMode(rows[i], INPUT);
   }
-
+  // setup cols 
   for (byte j = 0; j < columnsLength; j++) {
     pinMode(columns[j], INPUT_PULLUP);
     digitalWrite(columns[j], HIGH);
   }
-
-  pinMode(C8, INPUT_PULLUP);
-  digitalWrite(C8, HIGH);
-
-  Serial.begin(9600);
-
-  launchScreen();
-  initializeButtons(currentStartingNote, currentStartingOctave, scales[currentScale], scaleLengths[currentScale]);
+  
 }
 
 void loop() {
