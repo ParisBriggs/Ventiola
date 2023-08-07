@@ -1,0 +1,24 @@
+// Pseudocode for Ventiola Prototype II 
+
+Include libraries 
+Define variables 
+
+Setup() {
+  // setup lilypad outputs: speaker 
+  // setup lilypad inputs: soft pots, pressure sensor 
+}
+
+Loop() {
+  Setup(); 
+  readSensor(); 
+  
+  if (sensorVal) { // soft pots determine the musical note 
+    readSoftPots(); // only read in soft pot values if pressure applied to sensor 
+    // pressure sensor determines the pitch bend of the note (octave shifting) 
+  }
+  else { 
+    return;
+  } 
+
+
+}
