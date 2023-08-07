@@ -12,9 +12,9 @@ Loop() {
   Setup(); 
   readSensor(); 
   
-  if (sensorVal) { // soft pots determine the musical note 
-    readSoftPots(); // only read in soft pot values if pressure applied to sensor 
-    // pressure sensor determines the pitch bend of the note (octave shifting) 
+  if (sensorVal) { // only play note if pressure applied to sensor 
+    readSoftPots(); // soft pots determine the musical note 
+    pitchBendNote(sensorVal); // pressure sensor determines the pitch bend of the note (octave shifting) 
   }
   else { 
     return;
