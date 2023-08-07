@@ -30,13 +30,19 @@ void setup() {
 }
 
 void loop() {
+  setup(); 
+
+  // Soft pot determines note 
+  // Read in sensor values 
+  // Sensor values determine the pitch bend of the note 
+  // Only play note if sensor values exist
   
   // Read soft pot output 
   int stripPinVal = analogRead(stripPin);
   int stripVal = map(stripPinVal, 0, 1000, 0, 127);
   stripVal = constrain(stripVal, 0, 127);
 
-  // if soft pot strip is used 
+  // if soft pot strip is used, update value 
   if (stripVal != nextStripVal) { nextStripVal = stripVal; }
 
 }
