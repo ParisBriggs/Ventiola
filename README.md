@@ -1,7 +1,7 @@
 # Ventiola
 Repository for software development of the Ventiola. 
 
-Prototypes 2 and 3 will integrate Arduino as a microcontroller for the Ventiola. 
+Prototypes 2 and 3 will integrate Arduino as a microcontroller using MIDI communication for the Ventiola. 
 
 Inspired by: 
 - The MIDIlodica: https://github.com/XavierGerD/MIDILodica/tree/master
