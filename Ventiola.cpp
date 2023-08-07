@@ -1,7 +1,7 @@
 // Include libraries 
-#include <frequencyToNote.h>
 #include <MIDIUSB.h>
 #include <MIDIUSB_Defs.h>
+#include <frequencyToNote.h>
 #include <pitchToFrequency.h>
 #include <pitchToNote.h>
 #include <Adafruit_GFX.h>
@@ -9,9 +9,6 @@
 // #include <Fonts/FreeMonoBold9pt7b.h>
 
 // Define variables 
-
-// #define numberOfButtons 35
-
 #define sensorPin 18
 #define stripPin 19
 #define TFT_CS 23 // ??
@@ -85,9 +82,8 @@ byte nextStripVal;
 byte increment = 4;
 uint16_t colors[] = { textColor, 0x545d, textShadowColor };
 
-void showSplashScreen() {}
-
-void launchScreen() {}
+// void showSplashScreen() {}
+// void launchScreen() {}
 
 void setup() {
   Serial.begin(9600);
@@ -111,14 +107,15 @@ void setup() {
 
 void loop() {
   playMIDINotes();
+  
   int sensorPinVal = analogRead(sensorPin);
   int constrainedSensorVal = constrain(analogRead(sensorPin), minimumSensitivity, sensorSensitivities[currentSensitivity]);
 
-  // Avoid unwanted noise when idle.
+  // Avoid unwanted noise when unplayed noise 
   if (constrainedSensorVal <= 105) {
     constrainedSensorVal = 100;
   }
-
+  
   byte sensorValue = map(constrainedSensorVal, minimumSensitivity, sensorSensitivities[currentSensitivity], 0, 127);
 
   if (sensorValue != nextVal) {
@@ -129,7 +126,8 @@ void loop() {
   int stripPinVal = analogRead(stripPin);
   int stripVal = map(stripPinVal, 0, 1000, 0, 127);
   stripVal = constrain(stripVal, 0, 127);
-  
+
+  // if soft pot strip is used 
   if (stripVal != nextStripVal) {
     handleStripVal(stripVal);
     nextStripVal = stripVal;
@@ -196,41 +194,6 @@ void handleSensorOctaveShift(byte sensorVal) {
 }
 
 byte offset = 2;
-void drawTextWithShadow(char* text, byte x, byte y) {
-  tft.setTextColor(0x545d);
-  tft.setCursor(x - offset, y + offset);
-  tft.print(text);
+// void drawTextWithShadow(char* text, byte x, byte y) {}
 
-  tft.setTextColor(textColor);
-  tft.setCursor(x, y);
-  tft.print(text);
-}
-
-
-void updateNumberSelectMenuScreen(char* menuName, byte menuNameLength, char value[4], byte selectedIndex, bool isMaximumThreeDigits) {
-  tft.fillScreen(backgroundColor);
-  tft.setTextSize(2);
-
-  byte menuNameX = (tft.width() / 2) - (22 * menuNameLength / 2);
-  drawTextWithShadow(menuName, menuNameX, 50);
-
-  tft.setTextSize(4);
-
-  byte indexOffset = 1;
-  if (isMaximumThreeDigits) {
-    indexOffset = 2;
-  }
-
-  byte textX;
-  if (isMaximumThreeDigits) {
-    textX = (tft.width() / 2) - (44 * 3 / 2);
-    drawTextWithShadow(value, textX, 120);
-  } else {
-    textX = (tft.width() / 2) - (44 * 2 / 2);
-    char shortenedValue[] = {value[1], value[2]};
-    drawTextWithShadow(shortenedValue, textX, 120);
-  }
-
-  byte underscorePositionOffset = (44 * (indexOffset - selectedIndex));
-  drawTextWithShadow("_", textX + underscorePositionOffset, 120);
-}
+void updateNumberSelectMenuScreen(char* menuName, byte menuNameLength, char value[4], byte selectedIndex, bool isMaximumThreeDigits) {}
