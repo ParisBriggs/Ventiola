@@ -1,0 +1,23 @@
+Include libraries 
+Define values 
+
+setup() {
+  setup lilypad outputs (speaker) 
+  setup lilypad inputs (pressure sensor, soft pots) 
+} 
+
+Loop() {
+  setup(); 
+
+  readSensor(); 
+
+  if (sensorVal) { 
+    readSoftPots();  // Soft pot determines the musical note 
+    pitchBendNote(); // Sensor value determines the pitch bend of the note 
+  }
+  else { // Only play note if sensor values exist
+    return; 
+  } 
+
+  
+}
