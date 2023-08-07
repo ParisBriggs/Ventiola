@@ -106,23 +106,17 @@ void setup() {
 }
 
 void loop() {
-  playMIDINotes();
+  // playMIDINotes();
   
   int sensorPinVal = analogRead(sensorPin);
   int constrainedSensorVal = constrain(analogRead(sensorPin), minimumSensitivity, sensorSensitivities[currentSensitivity]);
 
   // Avoid unwanted noise when unplayed noise 
-  if (constrainedSensorVal <= 105) {
-    constrainedSensorVal = 100;
-  }
+  if (constrainedSensorVal <= 105) { constrainedSensorVal = 100; }
   
   byte sensorValue = map(constrainedSensorVal, minimumSensitivity, sensorSensitivities[currentSensitivity], 0, 127);
 
-  if (sensorValue != nextVal) {
-    handleSensorModes(sensorValue);
-    nextVal = sensorValue;
-  }
-
+  // read soft pot data
   int stripPinVal = analogRead(stripPin);
   int stripVal = map(stripPinVal, 0, 1000, 0, 127);
   stripVal = constrain(stripVal, 0, 127);
@@ -132,29 +126,6 @@ void loop() {
     handleStripVal(stripVal);
     nextStripVal = stripVal;
   }
-}
-
-void handleSensorModes(byte sensorVal) {
-  // YES I KNOW but the switch here isn't working properly
-  // for reasons I don't understand. So this will have to do.
-  if (sensorMode == SENSOR_VELOCITY) {
-    velocity = sensorVal;
-  } else if (sensorMode == SENSOR_MOD_WHEEL) {
-    midiEventPacket_t ccModWheel = {0x0B, 0xB0 | currentChannel, 1, sensorVal};
-    MidiUSB.sendMIDI(ccModWheel);
-  } else if (sensorMode == SENSOR_PITCH_BEND) {
-    midiEventPacket_t sensorPitchBendChange = {0x0B, 0xE0 | currentChannel, 1, sensorVal};
-    MidiUSB.sendMIDI(sensorPitchBendChange);
-  } else if (sensorMode == SENSOR_OCTAVE_SHIFT) {
-    handleSensorOctaveShift(sensorVal);
-  } else if (sensorMode == SENSOR_OFF) {
-    return;
-  } else if (sensorMode == SENSOR_CUSTOM_CC) {
-    midiEventPacket_t ccMessage = {0x0B, 0xB0 | currentChannel, sensorMIDICC, sensorVal};
-    MidiUSB.sendMIDI(ccMessage);
-  }
-
-  MidiUSB.flush();
 }
 
 void handleStripVal(int stripVal) {
@@ -177,23 +148,4 @@ void handleStripVal(int stripVal) {
   }
 
   MidiUSB.flush();
-
 }
-
-byte lastOctave = currentStartingOctave;
-
-void handleSensorOctaveShift(byte sensorVal) {
-  byte sensorOctaveShift = map(sensorVal, 0, 127, 0, 3);
-  byte newOctave = currentStartingOctave + sensorOctaveShift;
-
-  if (lastOctave != newOctave) {
-    assignNotesToButtons(currentStartingNote, newOctave, scales[currentScale], scaleLengths[currentScale]);
-    lastOctave = newOctave;
-  }
-
-}
-
-byte offset = 2;
-// void drawTextWithShadow(char* text, byte x, byte y) {}
-
-void updateNumberSelectMenuScreen(char* menuName, byte menuNameLength, char value[4], byte selectedIndex, bool isMaximumThreeDigits) {}
