@@ -14,11 +14,20 @@ Loop() {
   uint16_t sensorVal = readSensor(); // read in pressure sensor value 
   uint16_t noteLeft; 
   uint16_t noteRight; 
+
+  char sensorReadings[] = readSensor(); // read in pressure sensor data 
+
+  sensorVal = MAF(sensorReadings, 20); 
   
   if (sensorVal) { // only play note if pressure applied to sensor 
-    noteLeft = readSoftPotLeft(); // soft pots determine the musical note 
-    noteRight = readSoftPotRight(); 
-    
+
+    char potLeftReadings[] = readSoftPotLeft(); // read in soft pot (left) data 
+    char potRightReadings[] = readSoftPotRight(); // read in soft pot (right) data 
+
+    noteLeft = MAF(potLeftReadings, 20); // average value determines the musical note 
+    noteRight = MAF(potRightReadings, 20); 
+
+    // pitch bend notes 
     noteLeft = pitchBendNote(sensorVal, noteLeft); // pressure sensor determines the pitch bend of the note (octave shifting) 
     noteRight = pitchBendNote(sensorVal, noteRight); 
 
@@ -34,6 +43,7 @@ readSoftPotLeft() {}
 readSoftPotRight() {}
 pitchBendNote(sensorVal, note) {} 
 playNotes(noteLeft, noteRight) {} // send sound outputs to speaker 
+MAF(sensorData, numData) {} 
 
 
 
