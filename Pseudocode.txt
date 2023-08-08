@@ -18,7 +18,11 @@ Loop() {
   if (sensorVal) { // only play note if pressure applied to sensor 
     noteLeft = readSoftPotLeft(); // soft pots determine the musical note 
     noteRight = readSoftPotRight(); 
-    pitchBendNote(sensorVal, note); // pressure sensor determines the pitch bend of the note (octave shifting) 
+    
+    noteLeft = pitchBendNote(sensorVal, noteLeft); // pressure sensor determines the pitch bend of the note (octave shifting) 
+    noteRight = pitchBendNote(sensorVal, noteRight); 
+
+    playNotes(noteLeft, noteRight); 
   }
   else { 
     return;
@@ -29,6 +33,7 @@ readSensor() {}
 readSoftPotLeft() {}
 readSoftPotRight() {}
 pitchBendNote(sensorVal, note) {} 
+playNotes(noteLeft, noteRight) {} // send sound outputs to speaker 
 
 
 
