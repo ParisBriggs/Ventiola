@@ -4,26 +4,27 @@ Include libraries
 Define variables 
 
 Setup() {
-  // setup lilypad outputs: speaker 
-  // setup lilypad inputs: soft pots, pressure sensor 
+  // Setup lilypad outputs: speaker 
+  // Setup lilypad inputs: soft pots, pressure sensor 
 }
 
 Loop() {
   Setup(); 
 
-  uint16_t sensorVal = readSensor(); // read in pressure sensor value 
-  uint16_t noteLeft; 
-  uint16_t noteRight; 
+  // Initialise values: sensorVal, noteLeft, noteRight
 
-  char sensorReadings[] = readSensor(); // read in pressure sensor data 
-
+  // read in pressure sensor data 
+  double sensorReadings[] = readSensor(); 
+  // apply moving average filter to data  
   sensorVal = MAF(sensorReadings, 20); 
   
   if (sensorVal) { // only play note if pressure applied to sensor 
 
-    char potLeftReadings[] = readSoftPotLeft(); // read in soft pot (left) data 
-    char potRightReadings[] = readSoftPotRight(); // read in soft pot (right) data 
+    // read in soft pot data (left & right)
+    double potLeftReadings[] = readSoftPotLeft(); 
+    double potRightReadings[] = readSoftPotRight(); 
 
+    // apply moving average filter to data
     noteLeft = MAF(potLeftReadings, 20); // average value determines the musical note 
     noteRight = MAF(potRightReadings, 20); 
 
@@ -31,6 +32,7 @@ Loop() {
     noteLeft = pitchBendNote(sensorVal, noteLeft); // pressure sensor determines the pitch bend of the note (octave shifting) 
     noteRight = pitchBendNote(sensorVal, noteRight); 
 
+    // send final output to speaker 
     playNotes(noteLeft, noteRight); 
   }
   else { 
@@ -38,12 +40,12 @@ Loop() {
   } 
 }
 
-readSensor() {}
-readSoftPotLeft() {}
-readSoftPotRight() {}
-pitchBendNote(sensorVal, note) {} 
-playNotes(noteLeft, noteRight) {} // send sound outputs to speaker 
-MAF(sensorData, numData) {} 
+void readSensor() {}
+double readSoftPotLeft() {}
+double readSoftPotRight() {}
+const uint16_t pitchBendNote(sensorVal, note) {} 
+void playNotes(noteLeft, noteRight) {} // send sound outputs to speaker 
+double MAF(sensorData, numData) {} 
 
 
 
