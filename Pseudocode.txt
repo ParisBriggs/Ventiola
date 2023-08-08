@@ -12,10 +12,12 @@ Loop() {
   Setup(); 
 
   uint16_t sensorVal = readSensor(); // read in pressure sensor value 
-  uint16_t note; 
+  uint16_t noteLeft; 
+  uint16_t noteRight; 
   
   if (sensorVal) { // only play note if pressure applied to sensor 
-    note = readSoftPots(); // soft pots determine the musical note 
+    noteLeft = readSoftPotLeft(); // soft pots determine the musical note 
+    noteRight = readSoftPotRight(); 
     pitchBendNote(sensorVal, note); // pressure sensor determines the pitch bend of the note (octave shifting) 
   }
   else { 
@@ -24,7 +26,8 @@ Loop() {
 }
 
 readSensor() {}
-readSoftPots() {}
+readSoftPotLeft() {}
+readSoftPotRight() {}
 pitchBendNote(sensorVal, note) {} 
 
 
