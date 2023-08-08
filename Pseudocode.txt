@@ -1,7 +1,5 @@
 // Pseudocode for Ventiola Prototype II 
 
-// Very rudimentary pseudocode!! 
-
 Include libraries 
 Define variables 
 
