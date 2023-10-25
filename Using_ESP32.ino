@@ -39,32 +39,67 @@ Arduino 1.6.7
 // Clare's notes:
 // Code which uses poteniometer as strings with A and D tones, no volume control
 
-// this library was experimented with previously
-//#include "pitches.h"
-
-
 // Paris' notes:
 // ESP32 is not compatible with Tone library
+// need to change Tools/Upload speed -> 115200 
+// libraries to download: BLE-MIDI, ToneESP32 by larry  
 
-// Tone library allows musical functionality
-// #include <Tone.h>
+// ***************
+// TO DO: 
+// volume control with soft pot 
+// breath sensor for volume control 
+// BLE connection stabilised??? 
+// BLE MIDI connection & setup 
+// BLE MIDI working with phone app 
+// Consolidate circuit onto board 
+// rubber clarke habberfield 
+// ***************
+
 #include <ToneESP32.h>
+#include <Audio.h>
+
+// Emulated breath sensor using potentiometer 
+// ESP32 analog input (WARNING: limit voltage to 3.3v maximum)
+// const int breathPotPin = 34; // (GPIO 34) input pin used to control the audio volume
+// const int volumeControlSteps = 100; //100 steps -- the potentiometer (on GPIO34) controls audio volume between zero and 100%
+// int currentChannelNumber = 1;
+
+Audio audio;  //class from the ESP32-audioI2S library
+
+// turns on alternative pin for speaker 
+bool alternativePin = true; 
+
+// BLE libraries 
+// #include <BLEMIDI_Transport.h>
+// #include <hardware/BLEMIDI_ESP32.h> 
+
+// create instance of BLE midi object 
+// BLEMIDI_CREATE_INSTANCE("Ventiola", MIDI) 
+
+// Pins 
+const int softPotPin1 = 15;
+const int softPotPin2 = 36; 
+const int pressureSensor = 27; // ADC17
 
 // Soft potentiometer values
 int softPotValue_A;
+int softPotValue_D;
 
 // Instantiating speaker
-const int SpeakerPin = 2; // GPIO02 (ADC12)
-const int SpeakerChannel = 1;
+const int SpeakerPin1 = 2; // GPIO02 (ADC12)
+const int SpeakerChannel1 = 1;
 
-ToneESP32 speaker(SpeakerPin, SpeakerChannel); // sets pin and channel 
+const int SpeakerPin2 = 4; // GPIO02 (ADC12)
+const int SpeakerChannel2 = 1;
 
-const int SOFT_POT_PIN = 36; // Pin connected to softpot wiper, ADC0 
+ToneESP32 speaker1(SpeakerPin1, SpeakerChannel1); // sets pin and channel 
+ToneESP32 speaker2(SpeakerPin2, SpeakerChannel2); // sets pin and channel 
+
 const int GRAPH_LENGTH = 40; // Length of line graph
 
 void beep( int note, int duree ) {                   
-    speaker.tone(note, duree);       
-    speaker.tone(0, 5); 
+    speaker1.tone(note, duree);       
+    speaker1.tone(0, 5); 
     delay(duree*0.25);
 }
 
@@ -187,68 +222,83 @@ void printLineGraph(int softPotPosition, int softPotADC) {
 
 void setup()
 {
-  Serial.print("Setting up...");
-  // initialize serial communications at 115200 bps:
+  // initialise serial communications at 115200 bps:
   Serial.begin(115200);
-  // initalise soft pot pins as inputs
-  pinMode(SOFT_POT_PIN, INPUT);
+  // initalise pot pins as inputs
+  pinMode(softPotPin1, INPUT);
+  pinMode(softPotPin2, INPUT); 
+  pinMode(pressureSensor, INPUT);
+
+  pinMode(breathPotPin,INPUT);
+
+  //set the initial volume level
+  audio.setVolumeSteps(volumeControlSteps);
+  // map potentiometer value to a volume percentage
+  int volume = map(analogRead(breathPotPin), 0, 4095, 0, volumeControlSteps);  
+  audio.setVolume(volume);
+  Serial.print("Volume set at ");
+  Serial.print(volume);
+  Serial.println("%");
+
+  // get initial value for the "breath" pot 
+  // int BreathPotPosition = analogRead(breathPotPin);
+
+  // MIDI.begin(); 
 }
 
 void loop()
 {
+  int volume = map(analogRead(breathPotPin), 0, 4095, 0, volumeControlSteps);  
+  audio.setVolume(volume);
+
   // Read in the soft pot's ADC value
-  int softPotADC = analogRead(SOFT_POT_PIN);
+  int softPotADC1 = analogRead(softPotPin1);
+  int softPotADC2 = analogRead(softPotPin2);
+  int BreathPotADC = analogRead(breathPotPin);
+  int pressureSensorADC = analogRead(pressureSensor); 
 
-  Serial.println("Pot value: ");
-  Serial.println(String(softPotADC));
-
-
-
-
-  // *************************************
+  // If breath Pot has changed more than 6 values 
+  // if (abs(BreathPotADC - BreathPotPosition) > 6) {
+  //   BreathPotPosition = BreathPotADC; // you could map this to whatever range you wanted e.g.map(BreathPotADCValue, 0, 1023, 0, 255);
+  // }
 
   // Map the 0-1023 value to 0-40
-  // int softPotPosition = map(softPotADC, 0, 1023, 0, GRAPH_LENGTH);
+  int softPotPosition = map(softPotADC1, 0, 1023, 0, GRAPH_LENGTH);
+  int softPotPosition_2 = map(softPotADC2, 0, 1023, 0, GRAPH_LENGTH);
 
-  // printLineGraph(softPotPosition, softPotADC);
+  // Map the potentiometer values to the A and D string 
+  softPotValue_A =  map(softPotADC1, 0, 1023, 440, 880);
+  softPotValue_D =  map(softPotADC2, 0, 1023, 294, 587); // doesn't use full potentiometer?
 
-  // maps the potentiometer values to the A and D string
-  // softPotValue_A =  map(softPotADC, 0, 1023, 440, 880);
+  Serial.println("Pot1 value: ");
+  Serial.println(String(softPotADC1));
 
-  // // Debugging prints
-  Serial.println("pot Val A string: ");
-  // Serial.println(String(softPotValue_A));
-  // Serial.println(String(softPotADC));
+  Serial.println("Pot2 value: ");
+  Serial.println(String(softPotADC2));
+
+  Serial.print("Breath Pot ADC");
+  Serial.println(BreathPotADC);
+
 
   // playEveryNote(); 
 
-  // If you aren't pressing the pot, no sound
-  // if (softPotADC < 10) {
-  //   // speaker[0].stop();
-  //   Serial.print("No tone!");
-  //   // speaker.noTone(); // DO NOT USE, it detaches the pin 
-  //   speaker.tone(0, 50);       
+  // soft pots work simultaneously on one speaker! 
+  if (softPotADC1 > 10) {
+    speaker1.tone(softPotValue_A, 50);
+    // speaker2.tone(softPotADC1, 50);
+  } 
 
-  // // If you are pressing the pot, play mapped note
-  // } else {
-  //   // speaker[0].play(softPotValue_A);
-  //   // Serial.print("Playing: ");
-  //   // Serial.println(softPotValue_A); 
-  //   // Serial.println(softPotADC); 
-  //   // speaker.tone(softPotValue_A, 500);
-  //   // speaker.tone(softPotADC, 50);
-  // }
+  if (softPotADC2 > 10) {
+    speaker1.tone(softPotValue_D, 200);
+    // speaker2.tone(softPotADC2, 50); 
+  } 
 
-  // Delay 
-  delay(100);
+  // delay 
+  // delay(100);
 
 }
 
 
-
-
-
-// TO DO: create discrete notes with the soft pot! 
 // NOTE_B0  31
 // NOTE_C1  33
 // NOTE_CS1 35
@@ -340,5 +390,3 @@ void loop()
 // NOTE_CS8 4435
 // NOTE_D8  4699
 // NOTE_DS8 4978
-
-
