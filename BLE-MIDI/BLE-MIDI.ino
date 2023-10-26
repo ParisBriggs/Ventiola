@@ -158,6 +158,8 @@ void loop() {
     Serial.print("midi D: "); 
     Serial.println(midiNote_D);
 
+  } else {
+    delay(10);
   }
 
   // Update previous values before looping
