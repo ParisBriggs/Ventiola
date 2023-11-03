@@ -27,8 +27,8 @@ int prevNote_D = 0;
 
 // Pins 
 const int softPotPin1 = 15;
-const int softPotPin2 = 36; 
-const int pressureSensorPin = 27; // ADC17
+const int softPotPin2 = 34; 
+const int pressureSensorPin = 14; // ADC17
 
 // Soft potentiometer values
 int softPotValue_A;
@@ -87,19 +87,20 @@ void loop() {
   currNote_D = midiNote_D; 
   
   // if there is a valid velocity value
-  if (velocityToSend >= 40 && velocityToSend <= 127 ) 
+  if (velocityToSend >= 40 && velocityToSend < 127 ) 
   {
+    t0 = millis();
     // if the note has changed for A string 
     if (currNote_A != prevNote_A) {
       // if a note is being pressed
-      if (softPotADC_A > 3) {
+      if (softPotADC_A > 0) {
         // turn on the note
         MIDI.sendNoteOn(currNote_A, velocityToSend, 1);
       }
       // if the velocity has changed
     } else if (velocityToSend != velocityPrev) {
       // a note is being pressed
-        if (softPotADC_A > 3) {
+        if (softPotADC_A > 0) {
           // turn on the note with new velocity on A string
           MIDI.sendNoteOn(currNote_A, velocityToSend, 1);
         }
@@ -121,9 +122,8 @@ void loop() {
       }
   }
   // no velocity for 100 ms 
-  else if ( velocityToSend < 40 && velocityToSend > 127 && (millis() - t0) > 100)
+  else if ((velocityToSend < 40 || velocityToSend >= 127) && (millis() - t0) > 100)
   {
-    t0 = millis();
     // turn currNote OFF for both strings
     MIDI.sendNoteOff(currNote_A, 0, 1);
     MIDI.sendNoteOff(currNote_D, 0, 1);
@@ -142,6 +142,13 @@ void loop() {
   }
     // debug prints 
     if (debug) {
+
+    Serial.print("soft pot D: ");
+    Serial.println(softPotADC_D); 
+    Serial.print("soft pot A: ");
+    Serial.println(softPotADC_A); 
+    
+
     Serial.print("pressure: ");
     Serial.println(pressureSensorADC); 
     Serial.print("velocity To Send: ");
@@ -159,13 +166,15 @@ void loop() {
     Serial.println(midiNote_D);
 
   } else {
-    delay(10);
+    delay(15);
   }
 
   // Update previous values before looping
   prevNote_A = currNote_A; 
   prevNote_D = currNote_D; 
   velocityPrev = velocityToSend;
+
+  //delay(200);
 
 
 }
