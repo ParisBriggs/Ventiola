@@ -1,0 +1,194 @@
+
+
+// Using ESP32 to create a BLE MIDI device 
+// Paris' notes:
+// ESP32 is not compatible with Tone library
+// need to change Tools/Upload speed -> 115200 
+// libraries to download: BLE-MIDI, ToneESP32 by larry  
+
+// android apps to download: synprez fm, MIDI ble connect  
+// sound 6 for violin on synprez fm 
+
+//#include <ToneESP32.h>
+#include <BLEMIDI_Transport.h>
+#include <hardware/BLEMIDI_ESP32.h> 
+#include "MultiMap.h"
+
+bool debug = true; // set debug prints on or off 
+
+BLEMIDI_CREATE_INSTANCE("Ventiola", MIDI); 
+
+unsigned long t0 = millis();
+unsigned long t1 = millis();
+
+int currNote_A; 
+int currNote_D; 
+
+int prevNote_A = 0; 
+int prevNote_D = 0; 
+
+// Pins 
+const int softPotPin1 = 15;
+const int softPotPin2 = 34; 
+const int pressureSensorPin = 14; // ADC17
+
+// Soft potentiometer values
+int softPotValue_A;
+int softPotValue_D;
+
+
+int velocityPrev = -2; 
+int velocityToSend = -2;
+int velocityMapped;
+int midiNote1; 
+int midiNote2; 
+
+void setup() {
+  Serial.begin(115200); 
+  pinMode(pressureSensorPin, INPUT_PULLUP);
+  pinMode(softPotPin1, INPUT_PULLUP);  
+  pinMode(softPotPin2, INPUT_PULLUP); 
+  MIDI.begin();
+}
+
+void loop() {
+  // Read sensor values
+  int softPotADC_D = analogRead(softPotPin1);
+  int softPotADC_A = analogRead(softPotPin2);
+  int pressureSensorADC =  analogRead(pressureSensorPin); 
+  
+  // Map pressure sensor to velocity values 
+  int VelArraySize = 5; 
+  long PressureInputArray[] = {600, 800, 1000, 1500, 2600}; 
+
+  long VelOutputArray[] = {31,63,79,94,127}; 
+  velocityMapped = multiMap<long>(pressureSensorADC, PressureInputArray, VelOutputArray, VelArraySize); 
+
+  // Smooths out sound of velocityMapped 
+  if (abs(velocityMapped - velocityPrev) > 5) {
+    velocityToSend = velocityMapped;
+  } else if (velocityMapped < 40) {
+    velocityToSend = 0;
+  }
+
+
+  // Map soft pot sensors to midi note values 
+  int arraySize = 13; 
+  //long inputArray[] = {1, 75, 150, 225, 300, 375, 450, 640, 915, 1200, 1845, 2310, 4000}; 
+// Linear 1.9 cm apart
+  // long inputArrayA[] = { 0, 125, 180, 230, 285, 335, 395, 475, 575, 680, 815,1000, 1300}; 
+  // long inputArrayD[] = { 0, 65, 120, 175, 220, 270, 330, 400, 475, 590, 720, 920, 1200}; 
+
+// Mistake spacing
+  // long inputArrayA[] = { 110, 175, 200, 225, 295, 345, 400, 450, 500, 580, 660, 800, 1100}; 
+  // long inputArrayD[] = { 50, 105, 140, 175, 200, 275, 336, 380, 430, 500, 620,720, 950}; 
+
+  long inputArrayD[] = { 110, 185, 230, 265, 320, 350, 400, 465, 525, 595, 650, 725,815, 1100}; 
+  long inputArrayA[] = { 50, 125, 175, 210, 260, 300, 340, 400, 465, 535, 575,640, 750, 950};
+
+
+  // A string
+  long outputArray_A[] = {69,70,71,72,73,74,75,76,77,78,79,80,81}; 
+  int midiNote_A = multiMap<long>(softPotADC_A, inputArrayA, outputArray_A, arraySize);
+
+  // D string
+  long outputArray_D[] = {62,63,64,65,66,67,68,69,70,71,72,73,74}; 
+  int midiNote_D = multiMap<long>(softPotADC_D, inputArrayD, outputArray_D, arraySize);
+  
+  // Set curr notes 
+  currNote_A = midiNote_A; 
+  currNote_D = midiNote_D; 
+  
+  // if there is a valid velocity value
+  if (velocityToSend >= 40 && velocityToSend < 127 ) 
+  {
+    t0 = millis();
+    // if the note has changed for A string 
+    if (currNote_A != prevNote_A) {
+      // if a note is being pressed
+      if (softPotADC_A > 0) {
+        // turn on the note
+        MIDI.sendNoteOn(currNote_A, velocityToSend, 1);
+      }
+      //if the velocity has changed
+    } else if (velocityToSend != velocityPrev) {
+      // a note is being pressed
+        if (softPotADC_A > 0) {
+          // turn on the note with new velocity on A string
+          MIDI.sendNoteOn(currNote_A, velocityToSend, 1);
+        }
+    }
+    // if the note has changed for D string 
+    if (currNote_D != prevNote_D) {
+      // if a note is being played on D string
+      if (softPotADC_D > 3) {
+        // turn on note on D string
+          MIDI.sendNoteOn(currNote_D, velocityToSend, 1);
+        }
+        //if the velocity has changed
+      } else if (velocityToSend != velocityPrev) {
+        // if a note is being played on D string
+          if (softPotADC_D > 3) {
+            // turn on the note on the D string with new velocity 
+            MIDI.sendNoteOn(currNote_D, velocityToSend, 1);
+          }
+      }
+  }
+  // no velocity for 100 ms 
+  else if ((velocityToSend < 40 || velocityToSend >= 127) && (millis() - t0) > 100)
+  {
+    // turn currNote OFF for both strings
+    MIDI.sendNoteOff(currNote_A, 0, 1);
+    MIDI.sendNoteOff(currNote_D, 0, 1);
+  }
+
+  // note has changed for A string
+  if (prevNote_A != currNote_A) {
+    // turn OFF prevNote A string
+    MIDI.sendNoteOff(prevNote_A, 0, 1);
+  }
+
+  // note has changed for D string 
+  if (prevNote_D != currNote_D) {
+    // turn OFF prevNote D string
+    MIDI.sendNoteOff(prevNote_D, 0, 1);
+  }
+    // debug prints 
+    if (debug) {
+
+    Serial.print("soft pot D: ");
+    Serial.println(softPotADC_D); 
+    Serial.print("soft pot A: ");
+    Serial.println(softPotADC_A); 
+    
+
+    Serial.print("pressure: ");
+    Serial.println(pressureSensorADC); 
+    Serial.print("velocity To Send: ");
+    Serial.println(velocityToSend); 
+    Serial.println();
+
+    Serial.print("velocity Prev: ");
+    Serial.println(velocityPrev); 
+    Serial.println(); 
+
+    Serial.print("midi A: "); 
+    Serial.println(midiNote_A); 
+
+    Serial.print("midi D: "); 
+    Serial.println(midiNote_D);
+
+  } else {
+    delay(15);
+  }
+
+  // Update previous values before looping
+  prevNote_A = currNote_A; 
+  prevNote_D = currNote_D; 
+  velocityPrev = velocityToSend;
+
+  //delay(200);
+
+
+}
+
